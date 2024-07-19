@@ -153,9 +153,35 @@ static KawPowCache cache;
 #define mix_dst()   ("mix[" + std::to_string(mix_seq_dst[(mix_seq_dst_cnt++) % KPHash::REGS]) + "]")
 #define mix_cache() ("mix[" + std::to_string(mix_seq_cache[(mix_seq_cache_cnt++) % KPHash::REGS]) + "]")
 
+class KawPowBaton : public Baton<uv_work_t>
+{
+public:
+    inline KawPowBaton(const IOclRunner& runner, uint64_t period, uint32_t worksize) :
+        runner(runner),
+        period(period),
+        worksize(worksize)
+    {}
+
+    const IOclRunner& runner;
+    const uint64_t period;
+    const uint32_t worksize;
+};
+
+
 class KawPowBuilder
 {
 public:
+    ~KawPowBuilder()
+    {
+        if (m_loop) {
+            uv_async_send(&m_shutdownAsync);
+            uv_thread_join(&m_loopThread);
+            delete m_loop;
+        }
+    }
+
+    void build_async(const IOclRunner& runner, uint64_t period, uint32_t worksize);
+
     cl_kernel build(const IOclRunner &runner, uint64_t period, uint32_t worksize)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -368,40 +394,75 @@ private:
         st.jcong = 69069 * st.jcong + 1234567;
         return ((MWC ^ st.jcong) + st.jsr);
     }
-};
 
+private:
+    uv_loop_t* m_loop          = nullptr;
+    uv_thread_t m_loopThread   = {};
+    uv_async_t m_shutdownAsync = {};
+    uv_async_t m_batonAsync    = {};
 
-class KawPowBaton : public Baton<uv_work_t>
-{
-public:
-    inline KawPowBaton(const IOclRunner &runner, uint64_t period, uint32_t worksize) :
-        runner(runner),
-        period(period),
-        worksize(worksize)
-    {}
+    std::vector<KawPowBaton> m_batons;
 
-    const IOclRunner &runner;
-    const uint64_t period;
-    const uint32_t worksize;
+    static void loop(void* data)
+    {
+        KawPowBuilder* builder = static_cast<KawPowBuilder*>(data);
+        uv_run(builder->m_loop, UV_RUN_DEFAULT);
+        uv_loop_close(builder->m_loop);
+    }
 };
 
 
 static KawPowBuilder builder;
 
 
+void KawPowBuilder::build_async(const IOclRunner& runner, uint64_t period, uint32_t worksize)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if (!m_loop) {
+        m_loop = new uv_loop_t{};
+        uv_loop_init(m_loop);
+
+        uv_async_init(m_loop, &m_shutdownAsync, [](uv_async_t* handle)
+            {
+                KawPowBuilder* builder = reinterpret_cast<KawPowBuilder*>(handle->data);
+                uv_close(reinterpret_cast<uv_handle_t*>(&builder->m_shutdownAsync), nullptr);
+                uv_close(reinterpret_cast<uv_handle_t*>(&builder->m_batonAsync), nullptr);
+            });
+
+        uv_async_init(m_loop, &m_batonAsync, [](uv_async_t* handle)
+            {
+                std::vector<KawPowBaton> batons;
+                {
+                    KawPowBuilder* b = reinterpret_cast<KawPowBuilder*>(handle->data);
+
+                    std::lock_guard<std::mutex> lock(b->m_mutex);
+                    batons = std::move(b->m_batons);
+                }
+
+                for (const KawPowBaton& baton : batons) {
+                    builder.build(baton.runner, baton.period, baton.worksize);
+                }
+            });
+
+        m_shutdownAsync.data = this;
+        m_batonAsync.data = this;
+
+        uv_thread_create(&m_loopThread, loop, this);
+    }
+
+    m_batons.emplace_back(runner, period, worksize);
+    uv_async_send(&m_batonAsync);
+}
+
+
 cl_kernel OclKawPow::get(const IOclRunner &runner, uint64_t height, uint32_t worksize)
 {
     const uint64_t period = height / KPHash::PERIOD_LENGTH;
 
-    KawPowBaton* baton = new KawPowBaton(runner, period + 1, worksize);
-
-    uv_queue_work(uv_default_loop(), &baton->req,
-        [](uv_work_t *req) {
-            KawPowBaton* baton = static_cast<KawPowBaton*>(req->data);
-            builder.build(baton->runner, baton->period, baton->worksize);
-        },
-        [](uv_work_t *req, int) { delete static_cast<KawPowBaton*>(req->data); }
-    );
+    if (!cache.search(runner, period + 1, worksize)) {
+        builder.build_async(runner, period + 1, worksize);
+    }
 
     cl_kernel kernel = cache.search(runner, period, worksize);
     if (kernel) {

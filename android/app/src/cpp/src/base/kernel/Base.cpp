@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <cassert>
 #include <memory>
 
@@ -135,12 +134,12 @@ private:
         if (read(chain, config)) {
             return config.release();
         }
-        
+
         chain.addFile(Process::location(Process::HomeLocation,  "." APP_ID ".json"));
         if (read(chain, config)) {
             return config.release();
         }
-        
+
         chain.addFile(Process::location(Process::HomeLocation, ".config" XMRIG_DIR_SEPARATOR APP_ID ".json"));
         if (read(chain, config)) {
             return config.release();

@@ -17,7 +17,6 @@
  */
 
 #include "backend/opencl/runners/tools/OclCnR.h"
-
 #include "backend/opencl/cl/cn/cryptonight_r_cl.h"
 #include "backend/opencl/interfaces/IOclRunner.h"
 #include "backend/opencl/OclCache.h"

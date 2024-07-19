@@ -47,25 +47,16 @@
 namespace xmrig {
 
 
-#ifdef XMRIG_FEATURE_MO_BENCHMARK
-const char *BaseConfig::kAlgoPerf       = "algo-perf";
-#endif
 const char *BaseConfig::kApi            = "api";
 const char *BaseConfig::kApiId          = "id";
 const char *BaseConfig::kApiWorkerId    = "worker-id";
 const char *BaseConfig::kAutosave       = "autosave";
 const char *BaseConfig::kBackground     = "background";
-#ifdef XMRIG_FEATURE_MO_BENCHMARK
-const char *BaseConfig::kBenchAlgoTime  = "bench-algo-time";
-#endif
 const char *BaseConfig::kColors         = "colors";
 const char *BaseConfig::kDryRun         = "dry-run";
 const char *BaseConfig::kHttp           = "http";
 const char *BaseConfig::kLogFile        = "log-file";
 const char *BaseConfig::kPrintTime      = "print-time";
-#ifdef XMRIG_FEATURE_MO_BENCHMARK
-const char *BaseConfig::kRebenchAlgo    = "rebench-algo";
-#endif
 const char *BaseConfig::kSyslog         = "syslog";
 const char *BaseConfig::kTitle          = "title";
 const char *BaseConfig::kUserAgent      = "user-agent";
@@ -92,9 +83,6 @@ bool xmrig::BaseConfig::read(const IJsonReader &reader, const char *fileName)
     m_autoSave          = reader.getBool(kAutosave, m_autoSave);
     m_background        = reader.getBool(kBackground, m_background);
     m_dryRun            = reader.getBool(kDryRun, m_dryRun);
-#   ifdef XMRIG_FEATURE_MO_BENCHMARK
-    m_rebenchAlgo  = reader.getBool(kRebenchAlgo, m_rebenchAlgo);
-#   endif
     m_syslog            = reader.getBool(kSyslog, m_syslog);
     m_watch             = reader.getBool(kWatch, m_watch);
     m_logFile           = reader.getString(kLogFile);
@@ -107,9 +95,6 @@ bool xmrig::BaseConfig::read(const IJsonReader &reader, const char *fileName)
 #   endif
 
     Log::setColors(reader.getBool(kColors, Log::isColors()));
-#   ifdef XMRIG_FEATURE_MO_BENCHMARK
-    m_benchAlgoTime = reader.getInt(kBenchAlgoTime, m_benchAlgoTime);
-#   endif
     setVerbose(reader.getValue(kVerbose));
 
     const auto &api = reader.getObject(kApi);
@@ -157,7 +142,7 @@ void xmrig::BaseConfig::printVersions()
     snprintf(buf, sizeof buf, "MSVC/%d", MSVC_VERSION);
 #   endif
 
-    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") CYAN_BOLD("%s/%s") WHITE_BOLD(" %s"), "ABOUT", APP_NAME, APP_VERSION, buf);
+    Log::print(GREEN_BOLD(" * ") WHITE_BOLD("%-13s") CYAN_BOLD("%s/%s") WHITE_BOLD(" %s") WHITE_BOLD(" (built for %s") WHITE_BOLD(" %s,") WHITE_BOLD(" %s)"), "ABOUT", APP_NAME, APP_VERSION, buf, APP_OS, APP_ARCH, APP_BITS);
 
     std::string libs;
 

@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "backend/opencl/OclThread.h"
 #include "3rdparty/rapidjson/document.h"
 #include "base/io/json/Json.h"
@@ -117,9 +116,7 @@ rapidjson::Value xmrig::OclThread::toJSON(rapidjson::Document &doc) const
 
     out.AddMember(StringRef(kIndex),        index(), allocator);
     out.AddMember(StringRef(kIntensity),    intensity(), allocator);
-    if (!m_fields.test(ASTROBWT_FIELDS)) {
-        out.AddMember(StringRef(kWorksize), worksize(), allocator);
-    }
+    out.AddMember(StringRef(kWorksize),     worksize(), allocator);
 
     if (m_fields.test(STRIDED_INDEX_FIELD)) {
         Value si(kArrayType);
@@ -145,7 +142,7 @@ rapidjson::Value xmrig::OclThread::toJSON(rapidjson::Document &doc) const
         out.AddMember(StringRef(kDatasetHost),  isDatasetHost(), allocator);
 #       endif
     }
-    else if (!m_fields.test(ASTROBWT_FIELDS) && !m_fields.test(KAWPOW_FIELDS)) {
+    else if (!m_fields.test(KAWPOW_FIELDS)) {
         out.AddMember(StringRef(kUnroll), unrollFactor(), allocator);
     }
 

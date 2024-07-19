@@ -54,10 +54,6 @@ size_t inline generate<Algorithm::CN>(Threads<CpuThreads> &threads, uint32_t lim
         ++count;
     }
 
-#   ifdef XMRIG_ALGO_CN_GPU
-    count += generate(Algorithm::kCN_GPU, threads, Algorithm::CN_GPU, limit);
-#   endif
-
     return count;
 }
 
@@ -141,10 +137,6 @@ size_t inline generate<Algorithm::RANDOM_X>(Threads<CpuThreads> &threads, uint32
         count += threads.move(Algorithm::kRX_WOW, std::move(wow));
     }
 
-    if (!threads.isExist(Algorithm::RX_XLA)) {
-        count += generate(Algorithm::kRX_XLA, threads, Algorithm::RX_XLA, limit);
-    }
-
     count += generate(Algorithm::kRX, threads, Algorithm::RX_0, limit);
 
     return count;
@@ -161,13 +153,14 @@ size_t inline generate<Algorithm::ARGON2>(Threads<CpuThreads> &threads, uint32_t
 #endif
 
 
-#ifdef XMRIG_ALGO_ASTROBWT
+#ifdef XMRIG_ALGO_GHOSTRIDER
 template<>
-size_t inline generate<Algorithm::ASTROBWT>(Threads<CpuThreads>& threads, uint32_t limit)
+size_t inline generate<Algorithm::GHOSTRIDER>(Threads<CpuThreads>& threads, uint32_t limit)
 {
-    return generate(Algorithm::kASTROBWT, threads, Algorithm::ASTROBWT_DERO, limit);
+    return generate(Algorithm::kGHOSTRIDER, threads, Algorithm::GHOSTRIDER_RTM, limit);
 }
 #endif
+
 
 } /* namespace xmrig */
 

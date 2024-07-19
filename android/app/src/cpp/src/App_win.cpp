@@ -31,7 +31,7 @@
 #include "core/Controller.h"
 
 
-bool xmrig::App::background(int &)
+bool xmrig::App::background(int&)
 {
     if (!m_controller->isBackground()) {
         return false;
@@ -40,7 +40,8 @@ bool xmrig::App::background(int &)
     HWND hcon = GetConsoleWindow();
     if (hcon) {
         ShowWindow(hcon, SW_HIDE);
-    } else {
+    }
+    else {
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         CloseHandle(h);
         FreeConsole();

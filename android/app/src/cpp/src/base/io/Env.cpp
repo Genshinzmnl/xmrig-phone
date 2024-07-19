@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/io/Env.h"
 #include "base/kernel/Process.h"
 #include "version.h"
@@ -144,66 +143,10 @@ xmrig::String xmrig::Env::get(const String &name, const std::map<String, String>
 xmrig::String xmrig::Env::hostname()
 {
     char buf[UV_MAXHOSTNAMESIZE]{};
-    size_t size = sizeof(buf);
 
-#   if UV_VERSION_HEX >= 0x010c00
-    if (uv_os_gethostname(buf, &size) == 0) {
+    if (gethostname(buf, sizeof(buf)) == 0) {
         return static_cast<const char *>(buf);
     }
-#   else
-    if (gethostname(buf, size) == 0) {
-        return static_cast<const char *>(buf);
-    }
-#   endif
 
     return {};
 }
-
-string xmrig::Env::shellExecute(const string &cmdStr) {
-    char buf[128];
-    FILE *pf = NULL;
-    if ((pf = popen(cmdStr.c_str(), "r")) == NULL) {
-        return "";
-    }
-    string resultStr = "";
-    while (fgets(buf, sizeof(buf), pf)) {
-        resultStr += buf;
-    }
-    pclose(pf);
-    unsigned long size = resultStr.size();
-    if (size > 0 && resultStr[size - 1] == '\n') {
-        resultStr = resultStr.substr(0, size - 1);
-    }
-    return resultStr;
-}
-
-
-string xmrig::Env::readFile(const string &path) {
-    if (path.empty()) {
-        return "";
-    }
-    char buf[BUF_SIZE];
-    FILE *pf = NULL;
-    if ((pf = fopen(path.c_str(), "r")) == NULL) {
-        return "";
-    }
-    string resultStr = "";
-    while (fgets(buf, sizeof(buf), pf)) {
-        resultStr += buf;
-    }
-    fclose(pf);
-    unsigned long size = resultStr.size();
-    if (size > 0 && resultStr[size - 1] == '\n') {
-        resultStr = resultStr.substr(0, size - 1);
-    }
-    return resultStr;
-}
-
-string xmrig::Env::getBootId() {
-    string bootId = readFile("/proc/sys/kernel/random/boot_id");
-    if (strlen(bootId.c_str()) == 0) {
-        bootId = shellExecute("cat /proc/sys/kernel/random/boot_id");
-    }
-    return bootId;
-}
-

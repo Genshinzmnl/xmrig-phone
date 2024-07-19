@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "backend/opencl/OclConfig.h"
 #include "3rdparty/rapidjson/document.h"
 #include "backend/common/Tags.h"
@@ -215,7 +214,6 @@ void xmrig::OclConfig::generate()
     count += xmrig::generate<Algorithm::CN_PICO>(m_threads, devices);
     count += xmrig::generate<Algorithm::CN_FEMTO>(m_threads, devices);
     count += xmrig::generate<Algorithm::RANDOM_X>(m_threads, devices);
-    count += xmrig::generate<Algorithm::ASTROBWT>(m_threads, devices);
     count += xmrig::generate<Algorithm::KAWPOW>(m_threads, devices);
 
     m_shouldSave = count > 0;

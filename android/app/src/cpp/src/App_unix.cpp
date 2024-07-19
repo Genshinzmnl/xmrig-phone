@@ -34,7 +34,7 @@
 #include "core/Controller.h"
 
 
-bool xmrig::App::background(int &rc)
+bool xmrig::App::background(int& rc)
 {
     if (!m_controller->isBackground()) {
         return false;

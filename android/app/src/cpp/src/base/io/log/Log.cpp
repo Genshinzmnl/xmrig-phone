@@ -17,7 +17,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifdef WIN32
 #   include <winsock2.h>
 #   include <windows.h>

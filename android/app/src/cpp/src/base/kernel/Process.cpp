@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <ctime>
 #include <string>
 #include <uv.h>
@@ -153,7 +152,7 @@ xmrig::String xmrig::Process::exepath()
 {
     size_t size = sizeof(pathBuf);
 
-    return uv_exepath(pathBuf, &size) < 0 ? "" : String(pathBuf, size);
+    return uv_exepath(pathBuf, &size) < 0 ? String("") : String(pathBuf, size);
 }
 
 

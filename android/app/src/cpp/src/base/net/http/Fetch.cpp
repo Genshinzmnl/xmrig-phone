@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/net/http/Fetch.h"
 #include "3rdparty/rapidjson/document.h"
 #include "3rdparty/rapidjson/stringbuffer.h"

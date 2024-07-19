@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/net/https/HttpsContext.h"
 #include "3rdparty/llhttp/llhttp.h"
 #include "base/net/tls/TlsContext.h"

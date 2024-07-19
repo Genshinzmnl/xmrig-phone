@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/net/http/Http.h"
 #include "3rdparty/rapidjson/document.h"
 #include "base/io/json/Json.h"

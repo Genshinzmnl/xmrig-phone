@@ -41,7 +41,7 @@
 #include "version.h"
 
 
-xmrig::App::App(Process *process)
+xmrig::App::App(Process* process)
 {
     m_controller = std::make_shared<Controller>(process);
 }
@@ -56,7 +56,7 @@ xmrig::App::~App()
 int xmrig::App::exec()
 {
     if (!m_controller->isReady()) {
-        LOG_EMERG("no valid configuration found");
+        LOG_EMERG("no valid configuration found, try https://xmrig.com/wizard");
 
         return 2;
     }
@@ -85,21 +85,7 @@ int xmrig::App::exec()
         return 0;
     }
 
-#   ifdef XMRIG_FEATURE_MO_BENCHMARK
-    m_controller->pre_start();
-    m_controller->config()->benchmark().set_controller(m_controller);
-
-    if (m_controller->config()->benchmark().isNewBenchRun() || m_controller->config()->isRebenchAlgo()) {
-        if (m_controller->config()->isShouldSave()) {
-            m_controller->config()->save();
-        }
-        m_controller->config()->benchmark().start();
-    } else {
-        m_controller->start();
-    }
-#   else
     m_controller->start();
-#   endif
 
     rc = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     uv_loop_close(uv_default_loop());

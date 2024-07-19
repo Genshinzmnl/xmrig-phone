@@ -1,7 +1,7 @@
 /* XMRig
  * Copyright (c) 2019      Howard Chu  <https://github.com/hyc>
- * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2018-2023 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2023 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -205,16 +205,6 @@ void xmrig::Network::onLogin(IStrategy *, IClient *client, rapidjson::Document &
     }
 
     params.AddMember("algo", algo, allocator);
-
-#   ifdef XMRIG_FEATURE_MO_BENCHMARK
-    Value algo_perf(kObjectType);
-
-    for (const auto &a : algorithms) {
-        algo_perf.AddMember(StringRef(a.name()), m_controller->config()->benchmark().algo_perf[a.id()], allocator);
-    }
-
-    params.AddMember("algo-perf", algo_perf, allocator);
-#   endif
 }
 
 
@@ -292,13 +282,17 @@ void xmrig::Network::setJob(IClient *client, const Job &job, bool donate)
             snprintf(tx_buf, sizeof(tx_buf), " (%u tx)", num_transactions);
         }
 
-        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d%s") " diff " WHITE_BOLD("%" PRIu64 "%s") " algo " WHITE_BOLD("%s") " height " WHITE_BOLD("%" PRIu64) "%s",
-                 Tags::network(), client->pool().host().data(), client->pool().port(), zmq_buf, diff, scale, job.algorithm().name(), job.height(), tx_buf);
+        char height_buf[64] = {};
+        if (job.height() > 0) {
+            snprintf(height_buf, sizeof(height_buf), " height " WHITE_BOLD("%" PRIu64), job.height());
+        }
+
+        LOG_INFO("%s " MAGENTA_BOLD("new job") " from " WHITE_BOLD("%s:%d%s") " diff " WHITE_BOLD("%" PRIu64 "%s") " algo " WHITE_BOLD("%s") "%s%s",
+                 Tags::network(), client->pool().host().data(), client->pool().port(), zmq_buf, diff, scale, job.algorithm().name(), height_buf, tx_buf);
     }
 
     if (!donate && m_donate) {
-        m_donate->setAlgo(job.algorithm());
-        m_donate->setProxy(client->pool().proxy());
+        static_cast<DonateStrategy *>(m_donate)->update(client, job);
     }
 
     m_controller->miner()->setJob(job, donate);
@@ -314,6 +308,10 @@ void xmrig::Network::tick()
     if (m_donate) {
         m_donate->tick(now);
     }
+
+#   ifdef XMRIG_FEATURE_API
+    m_controller->api()->tick();
+#   endif
 }
 
 

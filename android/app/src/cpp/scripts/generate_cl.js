@@ -67,15 +67,6 @@ function rx()
 }
 
 
-function astrobwt()
-{
-    const astrobwt = opencl_minify(addIncludes('astrobwt.cl', [ 'BWT.cl', 'salsa20.cl', 'sha3.cl' ]));
-
-    // fs.writeFileSync('astrobwt_gen.cl', astrobwt);
-    fs.writeFileSync('astrobwt_cl.h', text2h(astrobwt, 'xmrig', 'astrobwt_cl'));
-}
-
-
 function kawpow()
 {
     const kawpow = opencl_minify(addIncludes('kawpow.cl', [ 'defs.h' ]));
@@ -87,30 +78,15 @@ function kawpow()
 }
 
 
-function cn_gpu()
-{
-    const cn_gpu = opencl_minify(addIncludes('cryptonight_gpu.cl', [ 'wolf-aes.cl', 'keccak.cl' ]));
-
-    // fs.writeFileSync('cryptonight_gpu_gen.cl', cn_gpu);
-    fs.writeFileSync('cryptonight_gpu_cl.h', text2h(cn_gpu, 'xmrig', 'cryptonight_gpu_cl'));
-}
-
-
 process.chdir(path.resolve('src/backend/opencl/cl/cn'));
 
 cn();
 cn_r();
-cn_gpu();
 
 process.chdir(cwd);
 process.chdir(path.resolve('src/backend/opencl/cl/rx'));
 
 rx();
-
-process.chdir(cwd);
-process.chdir(path.resolve('src/backend/opencl/cl/astrobwt'));
-
-astrobwt();
 
 process.chdir(cwd);
 process.chdir(path.resolve('src/backend/opencl/cl/kawpow'));

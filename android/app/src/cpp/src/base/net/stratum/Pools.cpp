@@ -72,7 +72,11 @@ bool xmrig::Pools::isEqual(const Pools &other) const
 
 int xmrig::Pools::donateLevel() const
 {
+#   ifdef XMRIG_FEATURE_BENCHMARK
+    return benchSize() || (m_benchmark && !m_benchmark->id().isEmpty()) ? 0 : m_donateLevel;
+#   else
     return m_donateLevel;
+#   endif
 }
 
 
@@ -143,7 +147,6 @@ void xmrig::Pools::load(const IJsonReader &reader)
         return;
     }
 
-    bool mo = false;
     for (const rapidjson::Value &value : pools.GetArray()) {
         if (!value.IsObject()) {
             continue;
@@ -151,7 +154,6 @@ void xmrig::Pools::load(const IJsonReader &reader)
 
         Pool pool(value);
         if (pool.isValid()) {
-            if (m_data.empty() && strstr(pool.host(), "moneroocean.stream")) mo = true;
             m_data.push_back(std::move(pool));
         }
     }
@@ -169,7 +171,7 @@ uint32_t xmrig::Pools::benchSize() const
     return m_benchmark ? m_benchmark->size() : 0;
 #   else
     return 0;
-#   endif    
+#   endif
 }
 
 

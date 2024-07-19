@@ -23,6 +23,7 @@
 #include "backend/opencl/runners/tools/OclSharedData.h"
 #include "backend/opencl/runners/tools/OclSharedState.h"
 #include "base/io/log/Log.h"
+#include "base/tools/Alignment.h"
 #include "base/tools/Chrono.h"
 #include "core/Miner.h"
 #include "crypto/common/Nonce.h"
@@ -34,16 +35,8 @@
 #   include "backend/opencl/runners/OclRxVmRunner.h"
 #endif
 
-#ifdef XMRIG_ALGO_ASTROBWT
-#   include "backend/opencl/runners/OclAstroBWTRunner.h"
-#endif
-
 #ifdef XMRIG_ALGO_KAWPOW
 #   include "backend/opencl/runners/OclKawPowRunner.h"
-#endif
-
-#ifdef XMRIG_ALGO_CN_GPU
-#   include "backend/opencl/runners/OclRyoRunner.h"
 #endif
 
 #include <cassert>
@@ -93,12 +86,6 @@ xmrig::OclWorker::OclWorker(size_t id, const OclLaunchData &data) :
 #       endif
         break;
 
-    case Algorithm::ASTROBWT:
-#       ifdef XMRIG_ALGO_ASTROBWT
-        m_runner = new OclAstroBWTRunner(id, data);
-#       endif
-        break;
-
     case Algorithm::KAWPOW:
 #       ifdef XMRIG_ALGO_KAWPOW
         m_runner = new OclKawPowRunner(id, data);
@@ -106,12 +93,6 @@ xmrig::OclWorker::OclWorker(size_t id, const OclLaunchData &data) :
         break;
 
     default:
-#       ifdef XMRIG_ALGO_CN_GPU
-        if (m_algorithm == Algorithm::CN_GPU) {
-            m_runner = new OclRyoRunner(id, data);
-        }
-        else
-#       endif
         m_runner = new OclCnRunner(id, data);
         break;
     }
@@ -189,7 +170,7 @@ void xmrig::OclWorker::start()
             const uint64_t t = Chrono::steadyMSecs();
 
             try {
-                m_runner->run(*m_job.nonce(), results);
+                m_runner->run(readUnaligned(m_job.nonce()), results);
             }
             catch (std::exception &ex) {
                 printError(id(), ex.what());

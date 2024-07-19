@@ -1,6 +1,6 @@
 /* XMRig
- * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2018-2023 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2023 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -36,8 +36,6 @@
 #include "core/Controller.h"
 #include "core/Miner.h"
 #include "net/Network.h"
-#include "base/io/Env.h"
-
 
 
 namespace xmrig {
@@ -45,9 +43,12 @@ namespace xmrig {
 static inline double randomf(double min, double max)                 { return (max - min) * (((static_cast<double>(rand())) / static_cast<double>(RAND_MAX))) + min; }
 static inline uint64_t random(uint64_t base, double min, double max) { return static_cast<uint64_t>(base * randomf(min, max)); }
 
-static const char *kDonateHost = "gulf.moneroocean.stream";
+static const char *kDonateHost = "donate.v2.xmrig.com";
+#ifdef XMRIG_FEATURE_TLS
+static const char *kDonateHostTls = "donate.ssl.xmrig.com";
+#endif
 
-} /* namespace xmrig */
+} // namespace xmrig
 
 
 xmrig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener *listener) :
@@ -56,18 +57,22 @@ xmrig::DonateStrategy::DonateStrategy(Controller *controller, IStrategyListener 
     m_controller(controller),
     m_listener(listener)
 {
-#   ifdef XMRIG_ALGO_KAWPOW
+    uint8_t hash[200];
+
+    const auto &user = controller->config()->pools().data().front().user();
+    keccak(reinterpret_cast<const uint8_t *>(user.data()), user.size(), hash);
+    Cvt::toHex(m_userId, sizeof(m_userId), hash, 32);
+
+#   if defined XMRIG_ALGO_KAWPOW || defined XMRIG_ALGO_GHOSTRIDER
     constexpr Pool::Mode mode = Pool::MODE_AUTO_ETH;
 #   else
     constexpr Pool::Mode mode = Pool::MODE_POOL;
 #   endif
-    static char donate_user[] = "46gPyHjLPPM8HaayVyvCDcF2A8sq8b476VrwKMukrKg21obm1AKEwzoN3u4ooc55FKdNeF5B8vcs4ixbeCyuydr2A2sdsQi";
-    static const char *donate_password = Env::getBootId().c_str();
 
 #   ifdef XMRIG_FEATURE_TLS
-    m_pools.emplace_back(kDonateHost, 20128, donate_user, donate_password, nullptr, 0, true, true,  mode);
+    m_pools.emplace_back(kDonateHostTls, 443, m_userId, nullptr, nullptr, 0, true, true, mode);
 #   endif
-    m_pools.emplace_back(kDonateHost, 10001, donate_user, donate_password, nullptr, 0, true, false, mode);
+    m_pools.emplace_back(kDonateHost, 3333, m_userId, nullptr, nullptr, 0, true, false, mode);
 
     if (m_pools.size() > 1) {
         m_strategy = new FailoverStrategy(m_pools, 10, 2, this, true);
@@ -90,6 +95,17 @@ xmrig::DonateStrategy::~DonateStrategy()
     if (m_proxy) {
         m_proxy->deleteLater();
     }
+}
+
+
+void xmrig::DonateStrategy::update(IClient *client, const Job &job)
+{
+    setAlgo(job.algorithm());
+    setProxy(client->pool().proxy());
+
+    m_diff   = job.diff();
+    m_height = job.height();
+    m_seed   = job.seed();
 }
 
 
@@ -194,13 +210,13 @@ void xmrig::DonateStrategy::onLogin(IClient *, rapidjson::Document &doc, rapidjs
     params.AddMember("url", m_pools[0].url().toJSON(), allocator);
 #   endif
 
-    setAlgorithms(doc, params);
+    setParams(doc, params);
 }
 
 
 void xmrig::DonateStrategy::onLogin(IStrategy *, IClient *, rapidjson::Document &doc, rapidjson::Value &params)
 {
-    setAlgorithms(doc, params);
+    setParams(doc, params);
 }
 
 
@@ -265,12 +281,20 @@ void xmrig::DonateStrategy::idle(double min, double max)
 }
 
 
-void xmrig::DonateStrategy::setAlgorithms(rapidjson::Document &doc, rapidjson::Value &params)
+void xmrig::DonateStrategy::setJob(IClient *client, const Job &job, const rapidjson::Value &params)
+{
+    if (isActive()) {
+        m_listener->onJob(this, client, job, params);
+    }
+}
+
+
+void xmrig::DonateStrategy::setParams(rapidjson::Document &doc, rapidjson::Value &params)
 {
     using namespace rapidjson;
     auto &allocator = doc.GetAllocator();
+    auto algorithms = m_controller->miner()->algorithms();
 
-    Algorithms algorithms = m_controller->miner()->algorithms();
     const size_t index = static_cast<size_t>(std::distance(algorithms.begin(), std::find(algorithms.begin(), algorithms.end(), m_algorithm)));
     if (index > 0 && index < algorithms.size()) {
         std::swap(algorithms[0], algorithms[index]);
@@ -282,14 +306,12 @@ void xmrig::DonateStrategy::setAlgorithms(rapidjson::Document &doc, rapidjson::V
         algo.PushBack(StringRef(a.name()), allocator);
     }
 
-    params.AddMember("algo", algo, allocator);
-}
+    params.AddMember("algo",    algo, allocator);
+    params.AddMember("diff",    m_diff, allocator);
+    params.AddMember("height",  m_height, allocator);
 
-
-void xmrig::DonateStrategy::setJob(IClient *client, const Job &job, const rapidjson::Value &params)
-{
-    if (isActive()) {
-        m_listener->onJob(this, client, job, params);
+    if (!m_seed.empty()) {
+       params.AddMember("seed_hash", Cvt::toHex(m_seed, doc), allocator);
     }
 }
 

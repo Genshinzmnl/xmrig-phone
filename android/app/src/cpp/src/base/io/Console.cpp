@@ -16,7 +16,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/io/Console.h"
 #include "base/kernel/interfaces/IConsoleListener.h"
 #include "base/tools/Handle.h"

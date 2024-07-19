@@ -27,13 +27,13 @@
 
 #if __ARM_FEATURE_CRYPTO && !defined(__APPLE__)
 #   include <sys/auxv.h>
-#   ifndef __FreeBSD__
+#   if !defined(XMRIG_OS_FREEBSD)
 #       include <asm/hwcap.h>
 #   else
 #       include <stdint.h>
 #       include <machine/armreg.h>
 #       ifndef ID_AA64ISAR0_AES_VAL
-#           define ID_AA64ISAR0_AES_VAL ID_AA64ISAR0_AES        
+#           define ID_AA64ISAR0_AES_VAL ID_AA64ISAR0_AES
 #       endif
 #   endif
 #endif
@@ -71,7 +71,7 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
 #   if __ARM_FEATURE_CRYPTO
 #   if defined(__APPLE__)
     m_flags.set(FLAG_AES, true);
-#   elif defined(__FreeBSD__)
+#   elif defined(XMRIG_OS_FREEBSD)
     uint64_t isar0 = READ_SPECIALREG(id_aa64isar0_el1);
     m_flags.set(FLAG_AES, ID_AA64ISAR0_AES_VAL(isar0) >= ID_AA64ISAR0_AES_BASE);
 #   else
@@ -99,8 +99,14 @@ const char *xmrig::BasicCpuInfo::backend() const
 }
 
 
-xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &, uint32_t) const
+xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint32_t) const
 {
+#   ifdef XMRIG_ALGO_GHOSTRIDER
+    if (algorithm.family() == Algorithm::GHOSTRIDER) {
+        return CpuThreads(threads(), 8);
+    }
+#   endif
+
     return CpuThreads(threads());
 }
 

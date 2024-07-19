@@ -17,7 +17,6 @@
  */
 
 #include "backend/opencl/runners/OclRxVmRunner.h"
-
 #include "backend/opencl/kernels/rx/Blake2bHashRegistersKernel.h"
 #include "backend/opencl/kernels/rx/ExecuteVmKernel.h"
 #include "backend/opencl/kernels/rx/HashAesKernel.h"

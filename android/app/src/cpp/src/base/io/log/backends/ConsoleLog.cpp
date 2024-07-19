@@ -17,7 +17,6 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "base/io/log/backends/ConsoleLog.h"
 #include "base/io/log/Log.h"
 #include "base/kernel/config/Title.h"

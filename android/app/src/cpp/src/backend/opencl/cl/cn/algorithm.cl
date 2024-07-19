@@ -27,11 +27,7 @@
 #define ALGO_AR2_CHUKWA     0x61130000
 #define ALGO_AR2_CHUKWA_V2  0x61140000
 #define ALGO_AR2_WRKZ       0x61120000
-#define ALGO_ASTROBWT_DERO  0x41000000
 #define ALGO_KAWPOW_RVN     0x6b0f0000
-
-#define ALGO_CN_GPU         0x631500ff
-#define ALGO_RX_XLA         0x721211ff
 
 #define FAMILY_UNKNOWN      0
 #define FAMILY_CN           0x63150000
@@ -41,5 +37,4 @@
 #define FAMILY_CN_FEMTO     0x63110000
 #define FAMILY_RANDOM_X     0x72000000
 #define FAMILY_ARGON2       0x61000000
-#define FAMILY_ASTROBWT     0x41000000
 #define FAMILY_KAWPOW       0x6b000000

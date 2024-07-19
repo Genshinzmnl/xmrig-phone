@@ -40,13 +40,6 @@ if (WITH_RANDOMX)
         src/crypto/rx/RxDataset.cpp
         src/crypto/rx/RxQueue.cpp
         src/crypto/rx/RxVm.cpp
-		
-		### Removed useless includes		
-		src/crypto/randomx/panthera/sha256.c
-		src/crypto/randomx/panthera/KangarooTwelve.c
-		src/crypto/randomx/panthera/KeccakP-1600-reference.c
-		src/crypto/randomx/panthera/KeccakSpongeWidth1600.c
-		src/crypto/randomx/panthera/yespower-opt.c
     )
 
     if (WITH_ASM AND CMAKE_C_COMPILER_ID MATCHES MSVC)
@@ -83,7 +76,15 @@ if (WITH_RANDOMX)
         list(APPEND SOURCES_CRYPTO src/crypto/randomx/blake2/blake2b_sse41.c)
 
         if (CMAKE_C_COMPILER_ID MATCHES GNU OR CMAKE_C_COMPILER_ID MATCHES Clang)
-            set_source_files_properties(src/crypto/randomx/blake2/blake2b_sse41.c PROPERTIES COMPILE_FLAGS -msse4.1)
+            set_source_files_properties(src/crypto/randomx/blake2/blake2b_sse41.c PROPERTIES COMPILE_FLAGS "-Ofast -msse4.1")
+        endif()
+    endif()
+
+    if (WITH_AVX2)
+        list(APPEND SOURCES_CRYPTO src/crypto/randomx/blake2/avx2/blake2b_avx2.c)
+
+        if (CMAKE_C_COMPILER_ID MATCHES GNU OR CMAKE_C_COMPILER_ID MATCHES Clang)
+            set_source_files_properties(src/crypto/randomx/blake2/avx2/blake2b_avx2.c PROPERTIES COMPILE_FLAGS "-Ofast -mavx2")
         endif()
     endif()
 
